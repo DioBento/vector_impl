@@ -49,23 +49,27 @@ public:
     {
         if (this == &other) { return *this; }
 
+        T* tmp = nullptr;
+        if (capacity_ < other.size_) {
+            tmp = static_cast<T*>(::operator new(sizeof(T) * other.size_, std::align_val_t{alignof(T)}));
+        }
+
         if constexpr (!std::is_trivially_destructible_v<T>) {
             for (size_t i = 0; i < size_; ++i) { data_[i].~T(); }
         }
 
-        if (capacity_ < other.capacity_) {
+        if (tmp != nullptr) {
             ::operator delete(data_, sizeof(T) * capacity_, std::align_val_t{alignof(T)});
-            capacity_ = other.capacity_;
-            data_ = static_cast<T*>(::operator new(sizeof(T) * capacity_, std::align_val_t{alignof(T)}));
+            capacity_ = other.size_;
+            data_ = tmp;
         }
 
-        size_ = other.size_;
-
         if constexpr (std::is_trivially_copyable_v<T>) {
+            size_ = other.size_;
             std::memcpy(data_, other.data_, sizeof(T) * size_);
         } else {
-            for (size_t i = 0; i < size_; ++i) {
-                new (data_ + i) T(other.data_[i]);
+            for (size_ = 0; size_ < other.size_; ++size_) {
+                new (data_ + size_) T(other.data_[size_]);
             }
         }
 
@@ -129,7 +133,7 @@ public:
         emplace_back(std::move(value));
     }
 
-    void pop_back()
+    void pop_back() noexcept
     {
         assert(size_ != 0);
 
@@ -139,22 +143,22 @@ public:
         --size_;
     }
 
-    size_t size() const
+    size_t size() const noexcept
     {
         return size_;
     }
 
-    size_t capacity() const
+    size_t capacity() const noexcept
     {
         return capacity_;
     }
 
-    T& operator[](size_t index)
+    T& operator[](size_t index) noexcept
     {
         return data_[index];
     }
 
-    const T& operator[](size_t index) const
+    const T& operator[](size_t index) const noexcept
     {
         return data_[index];
     }
@@ -171,54 +175,39 @@ public:
         return data_[index];
     }
 
-    T* data()
+    T* data() noexcept
     {
         return data_;
     }
 
-    const T* data() const
+    const T* data() const noexcept
     {
         return data_;
     }
 
-    T* begin()
+    T* begin() noexcept
     {
         return data_;
     }
 
-    T* end()
+    T* end() noexcept
     {
         return data_ + size_;
     }
 
-    const T* cbegin() const
+    const T* cbegin() const noexcept
     {
         return data_;
     }
 
-    const T* cend() const
+    const T* cend() const noexcept
     {
         return data_ + size_;
     }
 
-    bool empty() const
+    bool empty() const noexcept
     {
         return !size_;
-    }
-
-    void print() const
-    {
-        std::print("[ ");
-        for (size_t i = 0; i < size_; ++i) {
-            std::print("{} ", data_[i]);
-        }
-        std::print("]");
-    }
-
-    void println() const
-    {
-        print();
-        std::println("");
     }
 
 private:
@@ -242,7 +231,7 @@ private:
             }
         } else {
             for (size_t i = 0; i < size_; ++i) {
-                new (tmp + i) T{std::move(data_[i])};
+                new (tmp + i) T{std::move_if_noexcept(data_[i])};
                 if constexpr (!std::is_trivially_destructible_v<T>) {
                     data_[i].~T();
                 }
@@ -255,19 +244,13 @@ private:
     }
 };
 
-class Bar {
-    int inner_state;
+class Foo {
 public:
-    Bar() = default;
-    virtual ~Bar()
+    Foo()
     {
-        std::println("Bar destroyed!");
+        std::println("Foo Created!");
     }
-};
 
-class Foo : public Bar {
-public:
-    Foo() = default;
     ~Foo()
     {
         std::println("Foo Destroyed!");
@@ -278,21 +261,20 @@ int main(void)
 {
     // Vector<float> v;
     // for (size_t i = 1; i < 50; ++i) {
-    //     v.push_back(static_cast<float>(i));
+    //     v.emplace_back(static_cast<float>(i));
     // }
-    // float random = 51.0f;
     // v.push_back(50.0f);
     // v.pop_back();
-    // v.push_back(random);
-
-    // for (size_t i = 0; i < v.size(); ++i) {
-    //     std::println("{} ", v[i]);
-    // }
+    // v.println();
 
     Vector<Foo> w{50};
     for (size_t i = 0; i < 100; ++i) {
         w.emplace_back();
     }
+
+    // for (size_t i = 0; i < u.size(); ++i) {
+    //     std::println("Foo");
+    // }
 
     // Vector<std::string> ss;
     // const std::string def = "Hello";
