@@ -1,4 +1,5 @@
-// Task2 = Implement your own vector
+#ifndef VECTOR_CPP
+#define VECTOR_CPP
 
 #include <print>
 #include <cstring>
@@ -250,46 +251,4 @@ private:
     }
 };
 
-class Foo {
-public:
-    Foo()
-    {
-        std::println("Foo Created!");
-    }
-
-    ~Foo()
-    {
-        std::println("Foo Destroyed!");
-    }
-};
-
-int main(void)
-{
-    // Vector<float> v;
-    // for (size_t i = 1; i < 50; ++i) {
-    //     v.emplace_back(static_cast<float>(i));
-    // }
-    // v.push_back(50.0f);
-    // v.pop_back();
-    // v.println();
-
-    Vector<Foo> w{50};
-    for (size_t i = 0; i < 100; ++i) {
-        w.emplace_back();
-    }
-
-    Vector<int> i;
-    i.emplace_back(1);
-    i.emplace_back(2);
-
-    // for (size_t i = 0; i < u.size(); ++i) {
-    //     std::println("Foo");
-    // }
-
-    // Vector<std::string> ss;
-    // const std::string def = "Hello";
-    // for (size_t i = 0; i < 30; ++i) {
-    //     ss.emplace_back(def);
-    // }
-    // ss.println();
-}
+#endif // VECTOR_CPP
