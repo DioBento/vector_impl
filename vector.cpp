@@ -8,11 +8,10 @@
 #include <utility>
 #include <new>
 #include <cassert>
+#include <stdexcept>
 
 
 // TODO:
-    // use std::move_if_noexcept
-    // mark move and copy semantics 'noexcept' to complete the previous task
     // try catch possible exceptions to guarantee 'noexcept'
     // optional: add custom allocator support
     // optional: add iterator support
@@ -165,13 +164,17 @@ public:
 
     T& at(size_t index)
     {
-        assert(index < size_);
+        if (index >= size_) {
+            throw std::out_of_range("Element is out of Vector range.");
+        }
         return data_[index];
     }
 
     const T& at(size_t index) const
     {
-        assert(index < size_);
+        if (index >= size_) {
+            throw std::out_of_range("Element is out of Vector range.");
+        }
         return data_[index];
     }
 
@@ -217,8 +220,11 @@ private:
 
     void enlarge()
     {
-        size_t new_capacity = capacity_ ? capacity_ * 2 : 1;
-        assert(new_capacity > capacity_);
+        size_t new_capacity = capacity_ < 2 ? capacity_ + 1 : capacity_ + capacity_ / 2;
+
+        if (new_capacity <= capacity_) {
+            throw std::overflow_error("Vector capacity value has overflown. Quitting before any work has been done.");
+        }
 
         T* tmp = static_cast<T*>(::operator new(sizeof(T) * new_capacity, std::align_val_t{alignof(T)}));
 
@@ -271,6 +277,10 @@ int main(void)
     for (size_t i = 0; i < 100; ++i) {
         w.emplace_back();
     }
+
+    Vector<int> i;
+    i.emplace_back(1);
+    i.emplace_back(2);
 
     // for (size_t i = 0; i < u.size(); ++i) {
     //     std::println("Foo");
